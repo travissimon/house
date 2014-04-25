@@ -1,0 +1,75 @@
+<html>
+<head>
+<title>Home screen</title>
+<script src="//ajax.googleapis.com/ajax/libs/jquery/1.10.2/jquery.min.js"></script>
+<script src="/js/jquery.minicolors.js"></script>
+<link rel="stylesheet" href="/css/jquery.minicolors.css"></link>
+<style>
+  body {
+    font: 16px sans-serif;
+    line-height: 1.8;
+  }
+  body > div {
+    margin: 10px;
+  }
+  .light_display {
+    margin: 10px;
+    padding:20px
+  }
+</style>
+</head>
+<body>
+  <h1>Light control</h1>
+
+  {{range .}}
+  <div class="light_display" id="div_{{.Id}}" style="background-color: {{.Hex}};">
+	<label for="txt_{{.Id}}">{{.Name}}</label>
+	<input type="text" id="txt_{{.Id}}" class="lightControl" value="{{.Hex}}"></input>
+  </div>
+  {{end}}
+
+  <script>
+    $(document).ready(function() {
+	  $(".lightControl").minicolors({
+        control: "brightness",
+	    theme: "default",
+	    inline: false,
+	    changeOnValue: false,
+	    change: function(hex, opacity) {
+	      updateLight(this.id.substring(4), hex);
+	    },
+	    changeDelay: 10,
+      });
+
+    });
+
+	var ws = new WebSocket("ws://localhost:8080/socket");
+	ws.onmessage = function(e) {
+	  var colours = JSON.parse(e.data);
+	  for (var i=0; i < colours.length; i++) {
+	    var id = colours[i].Name;
+		var hex = colours[i].Hex;
+
+		$("#div_" + id).css("background-color", hex);
+		$("#txt_" + id).val(hex);
+	  }
+	}
+
+	function updateLight(id, hex) {
+	  $("#div_" + id).css("background-color", hex)
+	  var req = {
+        Request: {
+	      Action: "setLightColour",
+		  Arguments: {
+		    Id: id,
+		    Value: hex,
+		  },
+		},
+	  };
+	  var json = JSON.stringify(req);
+	  ws.send(json);
+    }
+
+  </script>
+</body>
+</html>

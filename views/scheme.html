@@ -1,0 +1,206 @@
+<html>
+<head>
+<title>Colour Scheme</title>
+<link rel="stylesheet" href="//code.jquery.com/ui/1.10.4/themes/smoothness/jquery-ui.css">
+<script src="//code.jquery.com/jquery-1.10.2.js"></script>
+<script src="//code.jquery.com/ui/1.10.4/jquery-ui.js"></script>
+<script src="/js/jquery.minicolors.js"></script>
+<link rel="stylesheet" href="/css/jquery.minicolors.css"></link>
+<style>
+  body {
+    font: 14px sans-serif;
+  }
+  body > div {
+    margin: 10px;
+  }
+  #tblColours > tbody > tr > td {
+    height: 50px;
+    text-align: center;
+  }
+  h4 {
+    margin-bottom: 5px
+  }
+  .light {
+    color: #eee;
+    margin: 20px;
+  }
+  .dark {
+    color: #333;
+    margin: 20px;
+  }
+  .cntrl {
+    margin-top: 0px;
+    padding-top: 0px;
+  }
+  .slider {
+    width: 400px;
+  }
+  .themeCol {
+    width: 50px;
+  }
+</style>
+</head>
+<body>
+
+  <!-- today we're going to layout like it's 1999 -->
+  <table>
+	<tr>
+	  <td valign=top>
+		<h4>Primary Colour</h4>
+		<input type="text" id="primaryColour" class="lightControl" value="#039"></input>
+	  </td>
+	  <td width="25px"></td>
+	  <td valign=top>
+		<form id="controlForm">
+		  <h4>Strategy</h4>
+		  <div id="strategy" class="cntrl">
+			<input type="radio" id="stratMonochromatic" name="radioStrategy" checked="checked">
+			<label for="stratMonochromatic">Monochromatic</label>
+			<input type="radio" id="stratComplementary" name="radioStrategy">
+			<label for="stratComplementary">Complementary</label>
+			<input type="radio" id="stratTriad" name="radioStrategy">
+			<label for="stratTriad">Triad</label>
+			<input type="radio" id="stratSplitComplementary" name="radioStrategy">
+			<label for="stratSplitComplementary">Split Complementary</label>
+			<input type="radio" id="stratTetradic" name="radioStrategy">
+			<label for="stratTetradic">Tetradic</label>
+			<input type="radio" id="stratAnalogic" name="radioStrategy">
+			<label for="stratAnalogic">Analogic</label>
+			<input type="radio" id="stratAccentedAnalogic" name="radioStrategy">
+			<label for="stratAccentedAnalogic">Accented Analogic</label>
+			<input type="radio" id="stratSquare" name="radioStrategy">
+			<label for="stratSquare">Square</label>
+		  </div>
+
+		  <h4>Angle</h4>
+		  <div class="cntrl slider">
+			<span id="angleDisplay"></span>
+			<div id="angleSlider"></div>
+		  </div>
+
+		  <h4>Tint</h4>
+		  <div class="cntrl slider">
+			<div id="tintDisplay">??</div>
+			<div id="tintSlider"></div>
+		  </div>
+		  
+		  <h4>Shade</h4>
+		  <div class="cntrl slider">
+			<div id="shadeDisplay">??</div>
+			<div id="shadeSlider"></div>
+		  </div>
+		  
+		</form>
+	  </td>
+	</tr>
+  </table>
+
+
+  {{range .}}
+  <div class="light_display" id="div_{{.Id}}" style="background-color: {{.Hex}};">
+	<label for="txt_{{.Id}}">{{.Name}}</label>
+	<input type="text" id="txt_{{.Id}}" class="lightControl" value="{{.Hex}}"></input>
+  </div>
+  {{end}}
+  
+  <script>
+    $(document).ready(function() {
+	  $("#strategy").buttonset();
+	  $("#strategy :radio").click(function() {
+	    updateTheme();
+	  });
+
+      $("#primaryColour").minicolors({
+        control: "brightness",
+	    theme: "default",
+	    inline: true,
+	    changeOnValue: false,
+	    change: function(hex, opacity) {
+	      updateTheme();
+	    },
+	    changeDelay: 10,
+      });
+
+	  $("#angleSlider").slider({
+	    range: "max",
+        min: -90,
+        max: 90,
+        value: 30,
+	    slide: function(event, ui) {
+	      $("#angleDisplay").text(ui.value)
+	      updateTheme();
+	    },
+	  });
+
+	  $("#angleDisplay").text( $("#angleSlider").slider('value') );
+
+	  $("#tintSlider").slider({
+	    range: "max",
+        min: 0,
+        max: 100,
+        value: 50,
+	    slide: function(event, ui) {
+	      $("#tintDisplay").text(ui.value / 100)
+	      updateTheme();
+	    },
+	  });
+
+	  $("#tintDisplay").text( $("#tintSlider").slider('value') / 100 );
+
+	  $("#shadeSlider").slider({
+	    range: "max",
+        min: 0,
+        max: 100,
+        value: 50,
+	    slide: function(event, ui) {
+	      $("#shadeDisplay").text(ui.value / 100)
+	      updateTheme();
+	    },
+	  });
+
+	  $("#shadeDisplay").text( $("#shadeSlider").slider('value') / 100 );
+    });
+
+	var ws = new WebSocket("ws://localhost:8080/socket");
+	ws.onmessage = function(e) {
+	  var resp = JSON.parse(e.data);
+	  showScheme(resp.Response);
+	}
+
+    function updateTheme() {
+		var primary = $("#primaryColour").minicolors('value');
+        var strat = $("#strategy :checked").attr("id").substring(5);
+		var angle = parseInt($("#angleSlider").slider('value'));
+		var tint = parseInt($("#tintSlider").slider('value')) / 100;
+		var shade = parseInt($("#shadeSlider").slider('value')) / 100;
+
+		var req = {
+	      Request: {
+	        Action: "setScheme",
+		    Arguments: {
+		      PrimaryColour: primary,
+			  Strategy: strat,
+			  Angle: angle,
+			  Tint: tint,
+			  Shade: shade,
+		    },
+	      },
+		};
+	    var json = JSON.stringify(req);
+
+		ws.send(json)
+    }
+
+	function showScheme(colours) {
+	  for (var i=0; i < colours.length; i++) {
+	    var id = colours[i].Id;
+		var hex = colours[i].Hex;
+
+		$("#div_" + id).css("background-color", hex);
+		$("#txt_" + id).val(hex);
+	  }
+	}
+  </script>
+
+</body>
+</html>
