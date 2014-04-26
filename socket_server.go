@@ -120,6 +120,10 @@ func (s *SocketServer) HandleIncomingRequest(msg SocketMessage) {
 	switch msg.Request.Action {
 	case "setLightColour":
 		s.HandleSetLightColour(msg)
+	case "setGenerator":
+		s.HandleSetGenerator(msg)
+	case "createScene":
+		s.HandleCreateScene(msg)
 	case "setScheme":
 		s.HandleSetScheme(msg)
 	default:
@@ -134,8 +138,15 @@ func (s *SocketServer) HandleSetLightColour(msg SocketMessage) {
 	l.SetState()
 }
 
-func (s *SocketServer) HandleSetScheme(msg SocketMessage) {
-	args := msg.GetSetSchemeArguments()
+func (s *SocketServer) HandleCreateScene(msg SocketMessage) {
+	args := msg.GetCreateSceneArguments()
+	scheme := NewScheme()
+	scheme.Name = args.Name
+	scheme.Persist()
+}
+
+func (s *SocketServer) HandleSetGenerator(msg SocketMessage) {
+	args := msg.GetSetGeneratorArguments()
 	strategy := colour.GetHarmonyStrategy(args.Strategy)
 	generator.SetStrategy(strategy)
 	generator.SetAngle(args.Angle)
@@ -172,6 +183,16 @@ func (s *SocketServer) HandleSetScheme(msg SocketMessage) {
 	proxies := s.getCurrentLightProxies()
 	msg.Response = proxies
 	s.sendAll(msg)
+}
+
+func (s *SocketServer) HandleSetScheme(msg SocketMessage) {
+	args := msg.GetSetSchemeArguments()
+	scheme, _ := LoadSchemeById(args.Id)
+	for _, light := range scheme.Lights {
+		l := getLightById(light.Id)
+		l.SetColourFromHex(light.Hex)
+		l.SetStateWithTransition(2)
+	}
 }
 
 func (s *SocketServer) getCurrentLightProxies() []*LightProxy {

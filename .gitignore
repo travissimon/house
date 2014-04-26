@@ -14,6 +14,8 @@ house
 _obj
 _test
 
+data
+
 # Architecture specific extensions/prefixes
 *.[568vq]
 [568vq].out

@@ -1,0 +1,87 @@
+<html>
+<head>
+<title>Schemes</title>
+<script src="//ajax.googleapis.com/ajax/libs/jquery/1.10.2/jquery.min.js"></script>
+<script src="/js/jquery.minicolors.js"></script>
+<link rel="stylesheet" href="/css/jquery.minicolors.css"></link>
+<style>
+  body {
+    font: 16px sans-serif;
+    line-height: 1.8;
+  }
+  body > div {
+    margin: 10px;
+  }
+  .scheme_display {
+    margin: 10px;
+    padding:10px
+  }
+  .highlight {
+    border: 1px solid blue;
+    cursor: pointer;
+  }
+</style>
+</head>
+<body>
+  <ul>
+	<li><a href="/">Home</a></li>
+	<li><a href="/lights">Lights</a></li>
+	<li><a href="/schemes">Schemes</a></li>
+	<li><a href="/generator">Random Scheme Generator</a></li>
+  </ul>
+
+  <h1>Schemes</h1>
+
+  {{range .}}
+  <div class="scheme_display" id="div_{{.Id}}">
+	{{.Name}}
+  </div>
+  {{end}}
+
+  <script>
+    $(document).ready(function() {
+      $(".scheme_display").hover(
+	    function() {
+	      $(this).addClass("highlight")
+	    },
+	    function() {
+	      $(this).removeClass("highlight")
+	    }
+	  ).click(function() {
+        var id = $(this).attr("id").substring(4);
+        displayScheme(id)
+      });
+    });
+
+	var ws = new WebSocket("ws://" + window.location.host + "/socket");
+	ws.onmessage = function(e) {
+	  alert("received: " + e.data)
+	  /*
+	  var colours = JSON.parse(e.data);
+	  for (var i=0; i < colours.length; i++) {
+	    var id = colours[i].Name;
+		var hex = colours[i].Hex;
+
+		$("#div_" + id).css("background-color", hex);
+		$("#txt_" + id).val(hex);
+	  }
+	  */
+	}
+
+    function displayScheme(id) {
+	  var req = {
+	    Request: {
+	      Action: "setScheme",
+          Arguments: {
+	 	    Id: id,
+		  },
+		},
+	  };
+	  var json = JSON.stringify(req);
+	  ws.send(json);
+	}
+
+
+  </script>
+</body>
+</html>

@@ -19,57 +19,20 @@
 </style>
 </head>
 <body>
-  <h1>Light control</h1>
+  <ul>
+	<li><a href="/">Home</a></li>
+	<li><a href="/lights">Lights</a></li>
+	<li><a href="/schemes">Schemes</a></li>
+	<li><a href="/generator">Random Scheme Generator</a></li>
+  </ul>
 
-  {{range .}}
-  <div class="light_display" id="div_{{.Id}}" style="background-color: {{.Hex}};">
-	<label for="txt_{{.Id}}">{{.Name}}</label>
-	<input type="text" id="txt_{{.Id}}" class="lightControl" value="{{.Hex}}"></input>
-  </div>
-  {{end}}
+  <h1>Light controller</h1>
+
+  <p>You can control some lights and stuff. Awesome.</p>
 
   <script>
     $(document).ready(function() {
-	  $(".lightControl").minicolors({
-        control: "brightness",
-	    theme: "default",
-	    inline: false,
-	    changeOnValue: false,
-	    change: function(hex, opacity) {
-	      updateLight(this.id.substring(4), hex);
-	    },
-	    changeDelay: 10,
-      });
-
     });
-
-	var ws = new WebSocket("ws://localhost:8080/socket");
-	ws.onmessage = function(e) {
-	  var colours = JSON.parse(e.data);
-	  for (var i=0; i < colours.length; i++) {
-	    var id = colours[i].Name;
-		var hex = colours[i].Hex;
-
-		$("#div_" + id).css("background-color", hex);
-		$("#txt_" + id).val(hex);
-	  }
-	}
-
-	function updateLight(id, hex) {
-	  $("#div_" + id).css("background-color", hex)
-	  var req = {
-        Request: {
-	      Action: "setLightColour",
-		  Arguments: {
-		    Id: id,
-		    Value: hex,
-		  },
-		},
-	  };
-	  var json = JSON.stringify(req);
-	  ws.send(json);
-    }
-
   </script>
 </body>
 </html>

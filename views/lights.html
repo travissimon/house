@@ -1,0 +1,127 @@
+<html>
+<head>
+<title>Home screen</title>
+<script src="//ajax.googleapis.com/ajax/libs/jquery/1.10.2/jquery.min.js"></script>
+<script src="/js/jquery.minicolors.js"></script>
+<link rel="stylesheet" href="/css/jquery.minicolors.css"></link>
+<style>
+  body {
+    font: 16px sans-serif;
+    line-height: 1.8;
+  }
+  body > div {
+    margin: 10px;
+  }
+  .light_display {
+    margin: 10px;
+    padding:20px
+  }
+</style>
+</head>
+<body>
+  <ul>
+	<li><a href="/">Home</a></li>
+	<li><a href="/lights">Lights</a></li>
+	<li><a href="/schemes">Schemes</a></li>
+	<li><a href="/generator">Random Scheme Generator</a></li>
+  </ul>
+
+  <h1>Light control</h1>
+
+  {{range .}}
+  <div class="light_display" id="div_{{.Id}}" style="background-color: {{.Hex}};">
+	<label for="txt_{{.Id}}">{{.Name}}</label>
+	<input type="text" id="txt_{{.Id}}" class="lightControl" value="{{.Hex}}"></input>
+  </div>
+  {{end}}
+
+  <form>
+	<label for="txtSchemeName">Scheme Name
+	<input type="text" id="txtSchemeName" />
+	
+	<div>
+	  <button type="button" id="btnSave">Save as new Scheme</button>
+	</div>
+  </form>
+
+  <script>
+    $(document).ready(function() {
+	  $(".lightControl").minicolors({
+        control: "brightness",
+	    theme: "default",
+	    inline: false,
+	    changeOnValue: false,
+	    change: function(hex, opacity) {
+	      updateLight(this.id.substring(4), hex);
+	    },
+	    changeDelay: 10,
+      });
+
+	  $("#btnSave").click(function() {
+	    saveScheme();
+	  });
+
+    });
+
+	var ws = new WebSocket("ws://" + window.location.host + "/socket");
+	ws.onmessage = function(e) {
+	  var colours = JSON.parse(e.data);
+	  for (var i=0; i < colours.length; i++) {
+	    var id = colours[i].Name;
+		var hex = colours[i].Hex;
+
+		$("#div_" + id).css("background-color", hex);
+		$("#txt_" + id).val(hex);
+	  }
+	}
+
+	function saveScheme() {
+	  var name = $("#txtSchemeName").val();
+	  var lights = getCurrentLights();
+	  
+	  var req = {
+	    Request: {
+	      Action: "createScene",
+          Arguments: {
+	 	    Name: name,
+ 		    Lights: lights,
+		  },
+		},
+	  };
+	  var json = JSON.stringify(req);
+	  ws.send(json);
+	}
+
+	function getCurrentLights() {
+	  var lights = [];
+	  for (var curId = 1; ;curId++) {
+	    var lightControl = $("#txt_" + curId);
+		if (lightControl == null || lightControl.val() == null) {
+		  return lights;
+		}
+		var light = {
+		  Id: curId,
+		  Hex: lightControl.val()
+		};
+		lights.push(light)
+	  }
+	}
+
+	function updateLight(id, hex) {
+	  $("#div_" + id).css("background-color", hex)
+	  var req = {
+        Request: {
+	      Action: "setLightColour",
+		  Arguments: {
+		    Id: id,
+		    Value: hex,
+		  },
+		},
+	  };
+	  var json = JSON.stringify(req);
+	  ws.send(json);
+    }
+
+  </script>
+</body>
+</html>

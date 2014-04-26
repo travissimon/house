@@ -42,6 +42,13 @@
 </head>
 <body>
 
+  <ul>
+	<li><a href="/">Home</a></li>
+	<li><a href="/lights">Lights</a></li>
+	<li><a href="/schemes">Schemes</a></li>
+	<li><a href="/generator">Random Scheme Generator</a></li>
+  </ul>
+
   <!-- today we're going to layout like it's 1999 -->
   <table>
 	<tr>
@@ -161,7 +168,7 @@
 	  $("#shadeDisplay").text( $("#shadeSlider").slider('value') / 100 );
     });
 
-	var ws = new WebSocket("ws://localhost:8080/socket");
+	var ws = new WebSocket("ws://" + window.location.host + "/socket");
 	ws.onmessage = function(e) {
 	  var resp = JSON.parse(e.data);
 	  showScheme(resp.Response);
@@ -187,7 +194,6 @@
 	      },
 		};
 	    var json = JSON.stringify(req);
-
 		ws.send(json)
     }
 
