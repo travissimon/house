@@ -4,7 +4,6 @@ import (
 	"code.google.com/p/go.net/websocket"
 	"fmt"
 	"io"
-	"log"
 )
 
 const channelBufferSize = 1024
@@ -76,7 +75,6 @@ func (c *SocketClient) listenWrite() {
 
 // listen for requests to read data from web client
 func (c *SocketClient) listenRead() {
-	log.Println("Listening for read request from web client")
 	for {
 		select {
 		case <-c.doneChannel:

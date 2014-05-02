@@ -7,6 +7,7 @@ import (
 	"log"
 	"math/rand"
 	"net/http"
+	"strconv"
 	"time"
 )
 
@@ -88,14 +89,10 @@ func (s *SocketServer) Listen() {
 
 			// add new client
 			case c := <-s.addChannel:
-				log.Println("Adding new client: ", c.id)
 				s.clients[c.id] = c
-
 				// delete a client
 			case c := <-s.deleteChannel:
-				log.Println("Deleting client: ", c.id)
 				delete(s.clients, c.id)
-
 				// broadcast a message
 			case msg := <-s.sendAllChannel:
 				s.sendAll(msg)
@@ -122,8 +119,8 @@ func (s *SocketServer) HandleIncomingRequest(msg SocketMessage) {
 		s.HandleSetLightColour(msg)
 	case "setGenerator":
 		s.HandleSetGenerator(msg)
-	case "createScene":
-		s.HandleCreateScene(msg)
+	case "saveScene":
+		s.HandleSaveScene(msg)
 	case "setScheme":
 		s.HandleSetScheme(msg)
 	default:
@@ -134,14 +131,18 @@ func (s *SocketServer) HandleIncomingRequest(msg SocketMessage) {
 func (s *SocketServer) HandleSetLightColour(msg SocketMessage) {
 	args := msg.GetSetLightArguments()
 	l := getLightById(args.Id)
-	l.SetColourFromHex(args.Value)
+	l.SetColourFromHex(args.Hex)
 	l.SetState()
 }
 
-func (s *SocketServer) HandleCreateScene(msg SocketMessage) {
-	args := msg.GetCreateSceneArguments()
+func (s *SocketServer) HandleSaveScene(msg SocketMessage) {
+	args := msg.GetSaveSceneArguments()
 	scheme := NewScheme()
+	if args.Id != "" {
+		scheme.Id, _ = strconv.Atoi(args.Id)
+	}
 	scheme.Name = args.Name
+	scheme.Lights = args.Lights
 	scheme.Persist()
 }
 
@@ -191,7 +192,7 @@ func (s *SocketServer) HandleSetScheme(msg SocketMessage) {
 	for _, light := range scheme.Lights {
 		l := getLightById(light.Id)
 		l.SetColourFromHex(light.Hex)
-		l.SetStateWithTransition(2)
+		l.SetStateWithTransition(10)
 	}
 }
 

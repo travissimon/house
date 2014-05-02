@@ -1,9 +1,5 @@
-<html>
-<head>
-<title>Home screen</title>
-<script src="//ajax.googleapis.com/ajax/libs/jquery/1.10.2/jquery.min.js"></script>
-<script src="/js/jquery.minicolors.js"></script>
-<link rel="stylesheet" href="/css/jquery.minicolors.css"></link>
+{{define "lights"}}
+{{template "header"}}
 <style>
   body {
     font: 16px sans-serif;
@@ -12,37 +8,79 @@
   body > div {
     margin: 10px;
   }
-  .light_display {
-    margin: 10px;
-    padding:20px
-  }
 </style>
-</head>
-<body>
-  <ul>
-	<li><a href="/">Home</a></li>
-	<li><a href="/lights">Lights</a></li>
-	<li><a href="/schemes">Schemes</a></li>
-	<li><a href="/generator">Random Scheme Generator</a></li>
-  </ul>
 
-  <h1>Light control</h1>
+  {{ if .Id }}
+  <h1>Edit Scheme: {{ .Name}}</h1>
+  {{ else }} 
+  <h1>Light controls</h1>
+  {{ end}}
 
-  {{range .}}
+  {{range .Lights}}
   <div class="light_display" id="div_{{.Id}}" style="background-color: {{.Hex}};">
 	<label for="txt_{{.Id}}">{{.Name}}</label>
 	<input type="text" id="txt_{{.Id}}" class="lightControl" value="{{.Hex}}"></input>
+	<input type="hidden" id="txt_{{.Id}}_name" value="{{.Name}}" />
   </div>
   {{end}}
 
-  <form>
-	<label for="txtSchemeName">Scheme Name
-	<input type="text" id="txtSchemeName" />
-	
-	<div>
-	  <button type="button" id="btnSave">Save as new Scheme</button>
-	</div>
-  </form>
+
+  <!-- Edit existing scheme: hide if we're NOT editing -->
+  <!-- New Scheme creation: hide if we're editing -->
+  {{ if .Id }}
+  <div>
+  {{ else }} 
+  <div style="display: none;">
+  {{ end}} 
+	<form>
+	  <div class="form-group">
+		<label for="txtEditSchemeName">Scheme Name</label>
+		<input type="text" id="txtEditSchemeName" class="form-control" value="{{.Name}}" />
+	  </div>
+	  <div>
+		<button type="button" id="btnCancelEditScheme" class="btn btn-danger">
+		  <span class="glyphicon glyphicon-remove"></span>
+		  Cancel
+		</button>
+		<button type="button" id="btnSaveEdit" class="btn btn-success">
+		  <span class="glyphicon glyphicon-floppy-disk"></span>
+		  Save
+		</button>
+	  </div>
+	</form>
+  </div>
+
+  <!-- New Scheme creation: hide if we're editing -->
+  {{ if .Id }}
+  <div style="display: none;">
+  {{ else }} 
+  <div>
+  {{ end}}
+	<button type="button" id="btnSaveScheme" class="btn btn-default btn-primary">
+	  <span class="glyphicon glyphicon-plus"></span>
+	  Save as New Scheme
+	</button>
+  </div>
+  
+  <div id="divSaveScheme" style="display:none">
+	<h2>Create new Scheme</h2>
+	<form>
+	  <div class="form-group">
+		<label for="txtSchemeName">Scheme Name</label>
+		<input type="text" id="txtSchemeName" class="form-control" />
+	  </div>
+	  <div>
+		<button type="button" id="btnCancelSaveScheme" class="btn btn-danger">
+		  <span class="glyphicon glyphicon-remove"></span>
+		  Cancel
+		</button>
+		<button type="button" id="btnSave" class="btn btn-success">
+		  <span class="glyphicon glyphicon-floppy-disk"></span>
+		  Save as new Scheme
+		</button>
+	  </div>
+	</form>
+  </div>
 
   <script>
     $(document).ready(function() {
@@ -57,8 +95,30 @@
 	    changeDelay: 10,
       });
 
+	  $("#btnSaveScheme").click(function() {
+	    $("#divSaveScheme").show();
+	    $("#btnSaveScheme").hide();
+	  });
+
+	  $("#btnCancelSaveScheme").click(function() {
+	    $("#divSaveScheme").hide();
+	    $("#btnSaveScheme").show();
+	  });
+
 	  $("#btnSave").click(function() {
 	    saveScheme();
+	    $("#txtSchemeName").val("")
+	    $("#divSaveScheme").hide();
+	    $("#btnSaveScheme").show();
+	  });
+
+	  $("#btnSaveEdit").click(function() {
+	    updateScheme();
+	    window.location.href="/schemes"
+	  });
+
+	  $("#btnCancelEdit").click(function() {
+	    window.location.href="/schemes"
 	  });
 
     });
@@ -81,14 +141,35 @@
 	  
 	  var req = {
 	    Request: {
-	      Action: "createScene",
+	      Action: "saveScene",
           Arguments: {
+		    Id: "",
 	 	    Name: name,
  		    Lights: lights,
 		  },
 		},
 	  };
 	  var json = JSON.stringify(req);
+	  ws.send(json);
+	}
+
+	function updateScheme() {
+	  var id = "{{.Id}}";
+	  var name = $("#txtEditSchemeName").val();
+	  var lights = getCurrentLights();
+	  
+	  var req = {
+	    Request: {
+	      Action: "saveScene",
+          Arguments: {
+		    Id: id,
+	 	    Name: name,
+ 		    Lights: lights,
+		  },
+		},
+	  };
+	  var json = JSON.stringify(req);
+	  console.log(json);
 	  ws.send(json);
 	}
 
@@ -99,8 +180,10 @@
 		if (lightControl == null || lightControl.val() == null) {
 		  return lights;
 		}
+	    var lightName = $("#txt_" + curId + "_name").val();
 		var light = {
-		  Id: curId,
+		  Id: "" + curId,
+		  Name: lightName,
 		  Hex: lightControl.val()
 		};
 		lights.push(light)
@@ -109,12 +192,14 @@
 
 	function updateLight(id, hex) {
 	  $("#div_" + id).css("background-color", hex)
+	  var lightName = $("#txt_" + id + "_name").val();
 	  var req = {
         Request: {
 	      Action: "setLightColour",
 		  Arguments: {
-		    Id: id,
-		    Value: hex,
+		    Id: "" + id,
+		    Name: lightName,
+		    Hex: hex
 		  },
 		},
 	  };
@@ -123,5 +208,5 @@
     }
 
   </script>
-</body>
-</html>
+{{template "footer"}}
+{{end}}

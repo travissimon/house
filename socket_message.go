@@ -24,11 +24,17 @@ type ClientRequest struct {
 }
 
 type SetLightArguments struct {
-	Id    string
-	Value string
+	Id   string
+	Name string
+	Hex  string
 }
 
-type CreateSceneArguments struct {
+func (s *SetLightArguments) String() string {
+	return s.Hex
+}
+
+type SaveSceneArguments struct {
+	Id     string
 	Name   string
 	Lights []*SetLightArguments
 }
@@ -40,8 +46,9 @@ type SetSchemeArguments struct {
 func (m *SocketMessage) GetSetLightArguments() SetLightArguments {
 	args := m.Request.Arguments
 	id := args["Id"].(string)
-	val := args["Value"].(string)
-	return SetLightArguments{id, val}
+	name := args["Name"].(string)
+	val := args["Hex"].(string)
+	return SetLightArguments{id, name, val}
 }
 
 func (m *SocketMessage) GetSetGeneratorArguments() SetGeneratorArguments {
@@ -54,20 +61,22 @@ func (m *SocketMessage) GetSetGeneratorArguments() SetGeneratorArguments {
 	return SetGeneratorArguments{primaryColour, strategy, angle, tint, shade}
 }
 
-func (m *SocketMessage) GetCreateSceneArguments() CreateSceneArguments {
+func (m *SocketMessage) GetSaveSceneArguments() SaveSceneArguments {
 	args := m.Request.Arguments
+	id := args["Id"].(string)
 	name := args["Name"].(string)
 	lightArray := args["Lights"].([]interface{})
 	lights := make([]*SetLightArguments, 0, len(lights))
 	for _, lightMap := range lightArray {
 		lm := lightMap.(map[string]interface{})
-		id := int32(lm["Id"].(float64))
+		id := lm["Id"].(string)
+		name := lm["Name"].(string)
 		hex := lm["Hex"].(string)
-		l := SetLightArguments{string(id), hex}
+		l := SetLightArguments{string(id), name, hex}
 		lights = append(lights, &l)
 	}
 
-	return CreateSceneArguments{name, lights}
+	return SaveSceneArguments{id, name, lights}
 }
 
 func (m *SocketMessage) GetSetSchemeArguments() SetSchemeArguments {

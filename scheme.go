@@ -16,13 +16,11 @@ var directory = "data"
 type Scheme struct {
 	Id     int
 	Name   string
-	Lights []*LightProxy
+	Lights []*SetLightArguments
 }
 
 func NewScheme() *Scheme {
-	proxies := getLightProxies()
-	id := nextSchemeId()
-	return &Scheme{id, "New Scheme", proxies}
+	return &Scheme{}
 }
 
 func nextSchemeId() int {
@@ -54,7 +52,11 @@ func (s *Scheme) Persist() error {
 	if s.Name == "" {
 		return fmt.Errorf("Cannot persist scheme - missing name\n")
 	}
+	if s.Id == 0 {
+		s.Id = nextSchemeId()
+	}
 	data, _ := json.Marshal(s)
+	log.Printf("Persist: %s", data)
 	filename := directory + "/" + strconv.Itoa(s.Id) + ".scheme"
 	ioutil.WriteFile(filename, data, 0664)
 	return nil

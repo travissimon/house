@@ -14,3 +14,7 @@ func NewLightProxyFromLight(light *huego.Light) *LightProxy {
 	hex := light.ToHex()
 	return &LightProxy{light.Id, light.Name, hex}
 }
+
+func (lp *LightProxy) String() string {
+	return lp.Hex
+}
