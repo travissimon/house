@@ -11,7 +11,7 @@ import (
 )
 
 var lastSchemeId = 0
-var directory = "data"
+var schemeDirectory = "data/schemes"
 
 type Scheme struct {
 	Id     int
@@ -32,7 +32,7 @@ func nextSchemeId() int {
 }
 
 func initLastSchemeId() {
-	files, _ := ioutil.ReadDir(directory)
+	files, _ := ioutil.ReadDir(schemeDirectory)
 	log.Printf("init scheme id: found %v files\n", len(files))
 	for _, f := range files {
 		sepIndex := strings.Index(f.Name(), ".")
@@ -57,13 +57,13 @@ func (s *Scheme) Persist() error {
 	}
 	data, _ := json.Marshal(s)
 	log.Printf("Persist: %s", data)
-	filename := directory + "/" + strconv.Itoa(s.Id) + ".scheme"
+	filename := getFileName(strconv.Itoa(s.Id))
 	ioutil.WriteFile(filename, data, 0664)
 	return nil
 }
 
 func LoadSchemes() ([]*Scheme, error) {
-	files, err := ioutil.ReadDir(directory)
+	files, err := ioutil.ReadDir(schemeDirectory)
 	if err != nil {
 		return nil, err
 	}
@@ -89,7 +89,7 @@ func DeleteSchemeById(id string) {
 }
 
 func loadSchemeByName(name string) (*Scheme, error) {
-	fileContents, err := ioutil.ReadFile(directory + "/" + name)
+	fileContents, err := ioutil.ReadFile(schemeDirectory + "/" + name)
 	if err != nil {
 		return nil, err
 	}
@@ -108,7 +108,7 @@ func getFileName(id string) string {
 }
 
 func deleteSchemeByName(name string) {
-	err := os.Remove(directory + "/" + name)
+	err := os.Remove(schemeDirectory + "/" + name)
 	if err != nil {
 		log.Printf("Could not delete '%v': %v", name, err)
 	}

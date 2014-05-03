@@ -70,7 +70,7 @@ func (m *SocketMessage) GetSaveSceneArguments() SaveSceneArguments {
 	id := args["Id"].(string)
 	name := args["Name"].(string)
 	lightArray := args["Lights"].([]interface{})
-	lights := make([]*SetLightArguments, 0, len(lights))
+	lights := make([]*SetLightArguments, 0, len(lightArray))
 	for _, lightMap := range lightArray {
 		lm := lightMap.(map[string]interface{})
 		id := lm["Id"].(string)
