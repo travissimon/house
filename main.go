@@ -35,6 +35,12 @@ func editSchemeHandler(w http.ResponseWriter, r *http.Request) {
 	templates.ExecuteTemplate(w, "lights", scheme)
 }
 
+func deleteSchemeHandler(w http.ResponseWriter, r *http.Request) {
+	id := r.URL.Path[len("/schemes/delete/"):]
+	scheme, _ := LoadSchemeById(id)
+	templates.ExecuteTemplate(w, "deleteScheme", scheme)
+}
+
 func lightsHandler(w http.ResponseWriter, r *http.Request) {
 	reloadLightState()
 	scheme := NewScheme()
@@ -85,6 +91,7 @@ func main() {
 	http.HandleFunc("/lights", lightsHandler)
 	http.HandleFunc("/generator", randomSchemeHandler)
 	http.HandleFunc("/schemes/edit/", editSchemeHandler)
+	http.HandleFunc("/schemes/delete/", deleteSchemeHandler)
 	http.HandleFunc("/schemes", schemeHandler)
 	http.HandleFunc("/", homeHandler)
 

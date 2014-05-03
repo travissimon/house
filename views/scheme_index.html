@@ -1,16 +1,10 @@
 {{define "schemeIndex"}}
 {{template "header"}}
 <style>
-  body {
-    font: 16px sans-serif;
-    line-height: 1.8;
-  }
-  body > div {
-    margin: 10px;
-  }
   .scheme_display {
     border: 1px solid whitesmoke;
     padding: 4px;
+    margin-top: 20px;
   }
   .highlight {
     border: 1px solid blue;
@@ -110,7 +104,7 @@
 
 	  $(".schemeDelete").click(function(event) {
 	    event.stopPropagation();
-        var id = $(this).attr("id").substring(9);
+        var id = $(this).attr("id").substring(10);
 	    deleteScheme(id);
 	  });
 

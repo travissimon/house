@@ -43,6 +43,10 @@ type SetSchemeArguments struct {
 	Id string
 }
 
+type DeleteSchemeArguments struct {
+	Id string
+}
+
 func (m *SocketMessage) GetSetLightArguments() SetLightArguments {
 	args := m.Request.Arguments
 	id := args["Id"].(string)
@@ -83,6 +87,12 @@ func (m *SocketMessage) GetSetSchemeArguments() SetSchemeArguments {
 	args := m.Request.Arguments
 	id := args["Id"].(string)
 	return SetSchemeArguments{id}
+}
+
+func (m *SocketMessage) GetDeleteSchemeArguments() DeleteSchemeArguments {
+	args := m.Request.Arguments
+	id := args["Id"].(string)
+	return DeleteSchemeArguments{id}
 }
 
 func (m *SocketMessage) String() string {

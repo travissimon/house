@@ -123,6 +123,8 @@ func (s *SocketServer) HandleIncomingRequest(msg SocketMessage) {
 		s.HandleSaveScene(msg)
 	case "setScheme":
 		s.HandleSetScheme(msg)
+	case "deleteScheme":
+		s.HandleDeleteScheme(msg)
 	default:
 		log.Printf("Unknown action: '%v'\n", msg.Request.Action)
 	}
@@ -194,6 +196,11 @@ func (s *SocketServer) HandleSetScheme(msg SocketMessage) {
 		l.SetColourFromHex(light.Hex)
 		l.SetStateWithTransition(10)
 	}
+}
+
+func (s *SocketServer) HandleDeleteScheme(msg SocketMessage) {
+	args := msg.GetDeleteSchemeArguments()
+	DeleteSchemeById(args.Id)
 }
 
 func (s *SocketServer) getCurrentLightProxies() []*LightProxy {

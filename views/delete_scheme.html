@@ -1,0 +1,60 @@
+{{define "deleteScheme"}}
+{{template "header"}}
+<style>
+  .divConfirmDelete {
+    margin-bottom: 30px;
+  }
+</style>
+
+  <h1>Delete: '{{.Name}}'</h1>
+
+  <div id="divConfirmDelete">
+	Is you sure you want to delete this scheme? I'm sure there are plenty
+	of people that would love a colour scheme like this.
+
+	<div style="margin-top: 20px">
+	  <button type="button" id="btnCancel" class="btn btn-default">Cancel</button>
+	  <button type="button" id="btnDelete" class="btn btn-danger">Delete</button>
+	</div>
+  </div>
+
+  {{range .Lights}}
+  <div class="light_display" id="div_{{.Id}}" style="background-color: {{.Hex}};">
+	<label for="txt_{{.Id}}">{{.Name}}</label>
+  </div>
+  {{end}}
+
+
+  <script>
+    $(document).ready(function() {
+	  $("#btnCancel").click(function() {
+	    window.history.back();
+	  });
+
+	  $("#btnDelete").click(function() {
+	    deleteScheme();
+	    window.location.href = "/schemes";
+	  });
+
+    });
+
+	var ws = new WebSocket("ws://" + window.location.host + "/socket");
+	ws.onmessage = function(e) {
+	}
+
+	function deleteScheme() {
+	  var req = {
+	    Request: {
+	      Action: "deleteScheme",
+          Arguments: {
+		    Id: "{{.Id}}",
+		  },
+		},
+	  };
+	  var json = JSON.stringify(req);
+	  ws.send(json);
+	}
+
+  </script>
+{{template "footer"}}
+{{end}}

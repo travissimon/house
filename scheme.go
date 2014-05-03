@@ -83,7 +83,9 @@ func LoadSchemeById(id string) (*Scheme, error) {
 }
 
 func DeleteSchemeById(id string) {
-	deleteSchemeByName(getFileName(id))
+	filename := getFileName(id)
+	log.Printf("Deleting file: %v", filename)
+	deleteSchemeByName(filename)
 }
 
 func loadSchemeByName(name string) (*Scheme, error) {
@@ -104,5 +106,8 @@ func getFileName(id string) string {
 }
 
 func deleteSchemeByName(name string) {
-	os.Remove(name)
+	err := os.Remove(directory + "/" + name)
+	if err != nil {
+		log.Printf("Could not delete '%v': %v", name, err)
+	}
 }
