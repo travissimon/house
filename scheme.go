@@ -56,10 +56,8 @@ func (s *Scheme) Persist() error {
 		s.Id = nextSchemeId()
 	}
 	data, _ := json.Marshal(s)
-	log.Printf("Persist: %s", data)
-	filename := getFileName(strconv.Itoa(s.Id))
-	ioutil.WriteFile(filename, data, 0664)
-	return nil
+	filename := getSchemeFileName(strconv.Itoa(s.Id))
+	return ioutil.WriteFile(filename, data, 0664)
 }
 
 func LoadSchemes() ([]*Scheme, error) {
@@ -79,12 +77,11 @@ func LoadSchemes() ([]*Scheme, error) {
 }
 
 func LoadSchemeById(id string) (*Scheme, error) {
-	return loadSchemeByName(getFileName(id))
+	return loadSchemeByName(getSchemeFileName(id))
 }
 
 func DeleteSchemeById(id string) {
-	filename := getFileName(id)
-	log.Printf("Deleting file: %v", filename)
+	filename := getSchemeFileName(id)
 	deleteSchemeByName(filename)
 }
 
@@ -101,15 +98,12 @@ func loadSchemeByName(name string) (*Scheme, error) {
 	return &scheme, nil
 }
 
-func getFileName(id string) string {
+func getSchemeFileName(id string) string {
 	maxDigits := 4
 	idStr := strings.Repeat("0", maxDigits-len(id)) + id
 	return idStr + ".scheme"
 }
 
-func deleteSchemeByName(name string) {
-	err := os.Remove(schemeDirectory + "/" + name)
-	if err != nil {
-		log.Printf("Could not delete '%v': %v", name, err)
-	}
+func deleteSchemeByName(name string) error {
+	return os.Remove(schemeDirectory + "/" + name)
 }
