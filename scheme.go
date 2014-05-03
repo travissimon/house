@@ -102,7 +102,9 @@ func loadSchemeByName(name string) (*Scheme, error) {
 }
 
 func getFileName(id string) string {
-	return id + ".scheme"
+	maxDigits := 4
+	idStr := strings.Repeat("0", maxDigits-len(id)) + id
+	return idStr + ".scheme"
 }
 
 func deleteSchemeByName(name string) {
