@@ -57,7 +57,7 @@ func (s *Scheme) Persist() error {
 	}
 	data, _ := json.Marshal(s)
 	filename := getSchemeFileName(strconv.Itoa(s.Id))
-	return ioutil.WriteFile(filename, data, 0664)
+	return ioutil.WriteFile(schemeDirectory+"/"+filename, data, 0664)
 }
 
 func LoadSchemes() ([]*Scheme, error) {
@@ -65,7 +65,7 @@ func LoadSchemes() ([]*Scheme, error) {
 	if err != nil {
 		return nil, err
 	}
-	schemes := make([]*Scheme, 0)
+	schemes := make([]*Scheme, 0, len(files))
 	for _, file := range files {
 		scheme, err := loadSchemeByName(file.Name())
 		if err != nil {

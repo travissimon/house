@@ -112,17 +112,6 @@
 
 	var ws = new WebSocket("ws://" + window.location.host + "/socket");
 	ws.onmessage = function(e) {
-	  alert("received: " + e.data)
-	  /*
-	  var colours = JSON.parse(e.data);
-	  for (var i=0; i < colours.length; i++) {
-	    var id = colours[i].Name;
-		var hex = colours[i].Hex;
-
-		$("#div_" + id).css("background-color", hex);
-		$("#txt_" + id).val(hex);
-	  }
-	  */
 	}
 
     function displayScheme(id) {

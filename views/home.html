@@ -1,13 +1,81 @@
 {{define "home"}}
 {{template "header"}}
 
-  <h1>Light controller</h1>
+<style>
+  .buttonrow {
+    margin-top: 20px
+  }
+</style>
 
-  <p>You can control some lights and stuff. Awesome.</p>
+<h1>Light controller</h1>
 
-  <script>
-    $(document).ready(function() {
+<p>You can control some lights and stuff. Awesome.</p>
+
+<div class="buttonrow">
+  <button id="btnAllOn" type="button" class="btn btn-default">Turn all on</button>
+</div>
+
+<div class="buttonrow">
+  <button id="btnAllOff" type="button" class="btn btn-default">Turn all off</button>
+</div>
+
+{{range .}}
+<div class="buttonrow">
+  <input type="checkbox" id="{{.Id}}" {{if .On}}checked="checked"{{end}} class="lightCheckbox"><label for="{{.Id}}">{{.Name}}</label>
+</div>
+{{end}}
+
+
+<script>
+  $(document).ready(function() {
+    $(".lightCheckbox").button().click(function() {
+      var id = this.id;
+      var isSet = this.checked
+      powerOne(id, isSet);
     });
-  </script>
+
+    $("#btnAllOn").click(function() {
+      powerAll(true);
+    });
+
+    $("#btnAllOff").click(function() {
+      powerAll(false);
+    });
+  });
+
+  var ws = new WebSocket("ws://" + window.location.host + "/socket");
+  ws.onmessage = function(e) {
+  }
+
+  function powerAll(turnOn) {
+    var act = turnOn ? "allOn" : "allOff";
+    var req = {
+      Request: {
+	    Action: act,
+        Arguments: {
+        },
+	  },
+    };
+	
+    var json = JSON.stringify(req);
+	ws.send(json);
+  }
+
+  function powerOne(id, turnOn) {
+    var req = {
+      Request: {
+	    Action: "setPower",
+        Arguments: {
+          Id: id,
+          TurnOn: turnOn,
+        },
+	  },
+    };
+
+    var json = JSON.stringify(req);
+	ws.send(json);
+  }
+
+</script>
 {{template "footer"}}
 {{end}}

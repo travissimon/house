@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"time"
 )
 
 type SetGeneratorArguments struct {
@@ -34,9 +35,14 @@ func (s *SetLightArguments) String() string {
 }
 
 type SaveSceneArguments struct {
-	Id     string
-	Name   string
-	Lights []*SetLightArguments
+	Id                 int
+	Name               string
+	ActiveTransition   time.Duration
+	ActiveHold         time.Duration
+	InactiveTransition time.Duration
+	InactiveHold       time.Duration
+	ActiveScheme       int
+	InactiveSchemes    []int
 }
 
 type SetSchemeArguments struct {
@@ -45,6 +51,11 @@ type SetSchemeArguments struct {
 
 type DeleteSchemeArguments struct {
 	Id string
+}
+
+type SetPowerArguments struct {
+	Id     string
+	TurnOn bool
 }
 
 func (m *SocketMessage) GetSetLightArguments() SetLightArguments {
@@ -67,20 +78,21 @@ func (m *SocketMessage) GetSetGeneratorArguments() SetGeneratorArguments {
 
 func (m *SocketMessage) GetSaveSceneArguments() SaveSceneArguments {
 	args := m.Request.Arguments
-	id := args["Id"].(string)
-	name := args["Name"].(string)
-	lightArray := args["Lights"].([]interface{})
-	lights := make([]*SetLightArguments, 0, len(lightArray))
-	for _, lightMap := range lightArray {
-		lm := lightMap.(map[string]interface{})
-		id := lm["Id"].(string)
-		name := lm["Name"].(string)
-		hex := lm["Hex"].(string)
-		l := SetLightArguments{string(id), name, hex}
-		lights = append(lights, &l)
+	id := int(args["id"].(float64))
+	name := args["name"].(string)
+	activeTransition, _ := time.ParseDuration(args["activeTransition"].(string))
+	activeHold, _ := time.ParseDuration(args["activeHold"].(string))
+	inactiveTransition, _ := time.ParseDuration(args["inactiveTransition"].(string))
+	inactiveHold, _ := time.ParseDuration(args["inactiveHold"].(string))
+	activeScheme := int(args["activeScheme"].(float64))
+	inactiveSchemes := args["inactiveSchemes"].([]interface{})
+
+	schs := make([]int, 0, len(inactiveSchemes))
+	for _, inact := range inactiveSchemes {
+		schs = append(schs, int(inact.(float64)))
 	}
 
-	return SaveSceneArguments{id, name, lights}
+	return SaveSceneArguments{id, name, activeTransition, activeHold, inactiveTransition, inactiveHold, activeScheme, schs}
 }
 
 func (m *SocketMessage) GetSetSchemeArguments() SetSchemeArguments {
@@ -93,6 +105,13 @@ func (m *SocketMessage) GetDeleteSchemeArguments() DeleteSchemeArguments {
 	args := m.Request.Arguments
 	id := args["Id"].(string)
 	return DeleteSchemeArguments{id}
+}
+
+func (m *SocketMessage) GetSetPowerArguments() SetPowerArguments {
+	args := m.Request.Arguments
+	id := args["Id"].(string)
+	turnOn := args["TurnOn"].(bool)
+	return SetPowerArguments{id, turnOn}
 }
 
 func (m *SocketMessage) String() string {

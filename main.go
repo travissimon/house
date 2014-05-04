@@ -24,6 +24,7 @@ var funcMap = template.FuncMap{
 var templates = template.Must(template.New("templates").Funcs(funcMap).ParseGlob("views/*.html"))
 
 func homeHandler(w http.ResponseWriter, r *http.Request) {
+	reloadLightState()
 	proxies := getLightProxies()
 	templates.ExecuteTemplate(w, "home", proxies)
 }
@@ -54,9 +55,21 @@ func randomSchemeHandler(w http.ResponseWriter, r *http.Request) {
 	templates.ExecuteTemplate(w, "generator", proxies)
 }
 
+type ScenePage struct {
+	Schemes []*Scheme
+	Scenes  []*Scene
+}
+
 func schemeHandler(w http.ResponseWriter, r *http.Request) {
 	schemes, _ := LoadSchemes()
 	templates.ExecuteTemplate(w, "schemeIndex", schemes)
+}
+
+func sceneHandler(w http.ResponseWriter, r *http.Request) {
+	schemes, _ := LoadSchemes()
+	scenes, _ := LoadScenes()
+	pg := &ScenePage{schemes, scenes}
+	templates.ExecuteTemplate(w, "scene", pg)
 }
 
 func getLightProxies() []*LightProxy {
@@ -93,6 +106,7 @@ func main() {
 	http.HandleFunc("/schemes/edit/", editSchemeHandler)
 	http.HandleFunc("/schemes/delete/", deleteSchemeHandler)
 	http.HandleFunc("/schemes", schemeHandler)
+	http.HandleFunc("/scenes", sceneHandler)
 	http.HandleFunc("/", homeHandler)
 
 	log.Printf("Listening on port %s\n", port)

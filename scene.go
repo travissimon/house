@@ -13,13 +13,35 @@ var lastSceneId = 0
 var sceneDirectory = "data/scenes"
 
 type Scene struct {
-	isRunning        bool
-	Id               int
-	ActiveHold       time.Duration
-	InactiveHoldHold time.Duration
-	TransitionTime   time.Duration
-	ActiveScheme     int
-	InactiveSchemes  []int
+	Id                 int
+	Name               string
+	ActiveHold         time.Duration
+	InactiveHold       time.Duration
+	InactiveTransition time.Duration
+	ActiveTransition   time.Duration
+	ActiveScheme       int
+	InactiveSchemes    []int
+	SensorName         string
+	isActive           bool
+	timer              *time.Timer
+	schemeIdx          int
+}
+
+func NewScene() *Scene {
+	return &Scene{
+		0,
+		"",               // Name
+		5 * time.Minute,  // Active hold
+		5 * time.Minute,  // Inactive hold
+		10 * time.Second, // Inactive transition
+		2 * time.Second,  // Active transition
+		1,                // active scheme
+		make([]int, 0),   // inactive scheme
+		"",               // sensor name
+		false,            // isActive
+		nil,              // private timer
+		0,                // current scheme index
+	}
 }
 
 func (s *Scene) Persist() error {
@@ -32,7 +54,7 @@ func (s *Scene) Persist() error {
 		return err
 	}
 	filename := getSceneFilename(strconv.Itoa(s.Id))
-	return ioutil.WriteFile(filename, data, 0664)
+	return ioutil.WriteFile(sceneDirectory+"/"+filename, data, 0664)
 }
 
 func nextSceneId() int {
@@ -60,6 +82,22 @@ func getSceneFilename(id string) string {
 	maxDigits := 4
 	idStr := strings.Repeat("0", maxDigits-len(id)) + id
 	return idStr + ".scene"
+}
+
+func LoadScenes() ([]*Scene, error) {
+	files, err := ioutil.ReadDir(sceneDirectory)
+	if err != nil {
+		return nil, err
+	}
+	scenes := make([]*Scene, 0, len(files))
+	for _, file := range files {
+		scene, err := loadSceneByName(file.Name())
+		if err != nil {
+			return nil, err
+		}
+		scenes = append(scenes, scene)
+	}
+	return scenes, nil
 }
 
 func LoadSceneById(id string) (*Scene, error) {
@@ -92,12 +130,44 @@ func deleteSceneByName(name string) error {
 }
 
 func (s *Scene) NotifyOfMovement(sensorName string) {
+	if !s.isActive {
+		s.transitionToScheme(s.ActiveScheme, s.ActiveTransition)
+	}
+	s.isActive = true
+
 }
 
 func (s *Scene) Start() {
-	s.isRunning = true
+	s.timer = time.AfterFunc(s.InactiveHold, s.durationComplete)
+}
+
+func (s *Scene) durationComplete() {
+	s.isActive = false
+	curId := s.InactiveSchemes[s.schemeIdx]
+	s.transitionToScheme(curId, s.InactiveTransition)
+	s.incrSchemeIdx()
+
+	s.timer = time.AfterFunc(s.InactiveHold, s.durationComplete)
+}
+
+func (s *Scene) transitionToScheme(id int, duration time.Duration) {
+	scheme, _ := LoadSchemeById(strconv.Itoa(id))
+	for _, light := range scheme.Lights {
+		l := getLightById(light.Id)
+		l.SetColourFromHex(light.Hex)
+		nanos := duration.Nanoseconds()
+		tenths := uint16(nanos / 1000 * 1000 * 10)
+		l.SetStateWithTransition(tenths)
+	}
+}
+
+func (s *Scene) incrSchemeIdx() {
+	s.schemeIdx++
+	if s.schemeIdx >= len(s.InactiveSchemes) {
+		s.schemeIdx = 0
+	}
 }
 
 func (s *Scene) Stop() {
-	s.isRunning = false
+	s.timer.Stop()
 }

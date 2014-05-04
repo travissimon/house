@@ -1,0 +1,175 @@
+{{define "scene"}}
+{{template "header"}}
+<style>
+  .scheme_display {
+    border: 1px solid whitesmoke;
+  }
+</style>
+
+  <h1>Scene</h1>
+
+  <form role="form">
+	<div id="grpName" class="form-group">
+	  <label for="scName">Name</label>
+	  <input type="text" class="form-control" id="scName" placeholder="Scene Name">
+	</div>
+
+	<div id="grpActiveTransition" class="form-group">
+	  <label for="scActiveTransition">ActiveTransition</label>
+	  <input type="text" class="form-control" id="scActiveTransition" placeholder="Active Transition">
+	</div>
+
+	<div id="grpActiveHold" class="form-group">
+	  <label for="scActiveHold">Active Hold</label>
+	  <input type="text" class="form-control" id="scActiveHold" placeholder="Active Hold">
+	</div>
+
+	<div id="grpInactiveTransition" class="form-group">
+	  <label for="scInactiveTransition">Inactive Transition</label>
+	  <input type="text" class="form-control" id="scInactiveTransition" placeholder="Inactive Transition">
+	</div>
+
+	<div id="grpInactiveHold" class="form-group">
+	  <label for="scInactiveHold">Inactive Hold</label>
+	  <input type="text" class="form-control" id="scInactiveHold" placeholder="Inactive Hold">
+	</div>
+
+	<div id="grpActiveScheme" class="form-group">
+	  <label>ActiveScheme</label>
+	  <select class="form-control" id="scActiveScheme">
+	  {{range $scheme := .Schemes}}
+		  <option value="{{$scheme.Id}}">{{$scheme.Name}}</option>
+	  {{end}}
+	  </select>
+	</div>
+
+	<div id="grpInactiveSchemes" class="row form-group">
+	  <label for="">Inactive Schemes</label>
+	</div>
+   {{ range $index, $element := .Schemes}}
+	 {{if modIsZero $index 4 0}}
+	 <div class="row">
+	 {{end}}
+	 <div class="col-sm-3 schemeDisplay" id="div_{{.Id}}">
+	   <div class="checkbox">
+		 <label>
+		   <input type="checkbox" value="{{.Id}}">
+		   {{.Name}}
+		 </label>
+	   </div>
+	</div>
+    {{if modIsZero $index 4 3}}
+    </div>
+    {{end}}
+  {{end}}
+	 
+    </div>
+  </form>
+
+  <div id="row">
+	<button type="button" id="btnCancelSaveScene" class="btn btn-danger">
+	  <span class="glyphicon glyphicon-remove"></span>
+	  Cancel
+	</button>
+	<button type="button" id="btnSaveScene" class="btn btn-success">
+	  <span class="glyphicon glyphicon-floppy-disk"></span>
+	  Save as new Scene
+	</button>
+  </div>
+
+  <script>
+	 $(document).ready(function() {
+	   $("#btnSaveScene").click(function() {
+	     saveScene();
+	   });
+
+	   $("#btnCancelSaveScene").click(function() {
+	   });
+	 });
+
+	 var ws = new WebSocket("ws://" + window.location.host + "/socket");
+	 ws.onmessage = function(e) {
+	 }
+
+	 function saveScene() {
+	   if (!validateScene()) {
+	     return;
+	   }
+	   scIds = getSelectedInactive();
+
+	   var req = {
+		 Request: {
+		   Action: "saveScene",
+		   Arguments: {
+			 id: 0,
+			 name: getText("Name"),
+	         activeTransition: getNumber("ActiveTransition"),
+	         activeHold: getNumber("ActiveHold"),
+	         inactiveTransition: getNumber("InactiveTransition"),
+	         inactiveHold: getNumber("InactiveHold"),
+	         activeScheme: parseInt(getNumber("ActiveScheme")),
+	         inactiveSchemes: scIds,
+		   },
+		 },
+	   };
+
+	   var json = JSON.stringify(req);
+	   ws.send(json);
+	 }
+
+	 function getSelectedInactive() {
+	   var schemes = [];
+	   $("input[type=checkbox]:checked").each(function() {
+		 schemes.push(parseInt($(this).val()));
+	   });
+	   return schemes;
+	 }
+
+	 function validateScene() {
+	   var isValid = true;
+	   isValid &= validateText("Name")
+	   isValid &= validateNumber("ActiveTransition")
+	   isValid &= validateNumber("ActiveHold")
+	   isValid &= validateNumber("InactiveTransition")
+	   isValid &= validateNumber("InactiveHold")
+	   isValid &= validateNumber("ActiveScheme")
+	   return isValid;
+	 }
+
+	 function validateNumber(selectorPostfix) {
+	   var val = $("#sc" + selectorPostfix).val();
+	   if (val == null || val.length == 0) {
+		 $("#grp" + selectorPostfix).addClass("has-error");
+		 return false;
+	   }
+	   var isInvalid = isNaN(parseInt(val))
+	   if (isInvalid) {
+		 $("#grp" + selectorPostfix).addClass("has-error");
+		 return false
+	   }
+	   $("#grp" + selectorPostfix).removeClass("has-error");
+	   return true;
+	 }
+
+	 function getNumber(selectorPostfix) {
+	   var val = $("#sc" + selectorPostfix).val();
+	   return val;
+	 }
+
+	 function validateText(selectorPostfix) {
+	   var val = $("#sc" + selectorPostfix).val();
+	   if (val == null || val == "") {
+		 $("#grp" + selectorPostfix).addClass("has-error");
+		 return false;
+	   }
+	  $("#grp" + selectorPostfix).removeClass("has-error");	
+	  return true;
+	}
+
+	function getText(selectorPostfix) {
+	  return $("#sc" + selectorPostfix).val();
+	}
+
+  </script>
+{{template "footer"}}
+{{end}}

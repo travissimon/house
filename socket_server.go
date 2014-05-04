@@ -7,7 +7,6 @@ import (
 	"log"
 	"math/rand"
 	"net/http"
-	"strconv"
 	"time"
 )
 
@@ -125,6 +124,12 @@ func (s *SocketServer) HandleIncomingRequest(msg SocketMessage) {
 		s.HandleSetScheme(msg)
 	case "deleteScheme":
 		s.HandleDeleteScheme(msg)
+	case "allOn":
+		s.HandleAllOn(msg)
+	case "allOff":
+		s.HandleAllOff(msg)
+	case "setPower":
+		s.HandleSetPower(msg)
 	default:
 		log.Printf("Unknown action: '%v'\n", msg.Request.Action)
 	}
@@ -139,13 +144,16 @@ func (s *SocketServer) HandleSetLightColour(msg SocketMessage) {
 
 func (s *SocketServer) HandleSaveScene(msg SocketMessage) {
 	args := msg.GetSaveSceneArguments()
-	scheme := NewScheme()
-	if args.Id != "" {
-		scheme.Id, _ = strconv.Atoi(args.Id)
-	}
-	scheme.Name = args.Name
-	scheme.Lights = args.Lights
-	scheme.Persist()
+	scene := NewScene()
+	scene.Id = args.Id
+	scene.Name = args.Name
+	scene.ActiveTransition = args.ActiveTransition
+	scene.ActiveHold = args.ActiveHold
+	scene.InactiveTransition = args.InactiveTransition
+	scene.InactiveHold = args.InactiveHold
+	scene.ActiveScheme = args.ActiveScheme
+	scene.InactiveSchemes = args.InactiveSchemes
+	scene.Persist()
 }
 
 func (s *SocketServer) HandleSetGenerator(msg SocketMessage) {
@@ -181,6 +189,7 @@ func (s *SocketServer) HandleSetGenerator(msg SocketMessage) {
 		light.State.Sat = s
 		light.State.Bri = v
 		light.SetState()
+		time.Sleep(30 * time.Millisecond)
 	}
 
 	proxies := s.getCurrentLightProxies()
@@ -195,12 +204,44 @@ func (s *SocketServer) HandleSetScheme(msg SocketMessage) {
 		l := getLightById(light.Id)
 		l.SetColourFromHex(light.Hex)
 		l.SetStateWithTransition(10)
+		time.Sleep(30 * time.Millisecond)
 	}
 }
 
 func (s *SocketServer) HandleDeleteScheme(msg SocketMessage) {
 	args := msg.GetDeleteSchemeArguments()
 	DeleteSchemeById(args.Id)
+}
+
+func (s *SocketServer) HandleSetPower(msg SocketMessage) {
+	args := msg.GetSetPowerArguments()
+	l := getLightById(args.Id)
+	if l.State.On != args.TurnOn {
+		l.State.On = args.TurnOn
+		l.SetState()
+	}
+}
+
+func (s *SocketServer) HandleAllOn(msg SocketMessage) {
+	powerAll(true)
+}
+
+func (s *SocketServer) HandleAllOff(msg SocketMessage) {
+	powerAll(false)
+}
+
+func powerAll(turnOn bool) {
+	for _, light := range lights {
+		if light.State.On != turnOn {
+			light.State.On = turnOn
+			if turnOn {
+				light.SetStateWithTransition(10)
+			} else {
+				light.SetState()
+			}
+		}
+		time.Sleep(30 * time.Millisecond)
+	}
 }
 
 func (s *SocketServer) getCurrentLightProxies() []*LightProxy {
