@@ -3,6 +3,7 @@ package main
 import (
 	"encoding/json"
 	"io/ioutil"
+	"log"
 	"os"
 	"strconv"
 	"strings"
@@ -131,13 +132,15 @@ func deleteSceneByName(name string) error {
 
 func (s *Scene) NotifyOfMovement(sensorName string) {
 	if !s.isActive {
+		log.Printf("Transitioning to Active Scene")
 		s.transitionToScheme(s.ActiveScheme, s.ActiveTransition)
 	}
 	s.isActive = true
-
+	s.timer.Reset(s.ActiveHold + s.ActiveTransition)
 }
 
 func (s *Scene) Start() {
+	log.Printf("Starting scene '%v'\n", s.Name)
 	s.timer = time.AfterFunc(s.InactiveHold, s.durationComplete)
 }
 
@@ -147,7 +150,7 @@ func (s *Scene) durationComplete() {
 	s.transitionToScheme(curId, s.InactiveTransition)
 	s.incrSchemeIdx()
 
-	s.timer = time.AfterFunc(s.InactiveHold, s.durationComplete)
+	s.timer = time.AfterFunc(s.InactiveTransition+s.InactiveHold, s.durationComplete)
 }
 
 func (s *Scene) transitionToScheme(id int, duration time.Duration) {
@@ -156,7 +159,8 @@ func (s *Scene) transitionToScheme(id int, duration time.Duration) {
 		l := getLightById(light.Id)
 		l.SetColourFromHex(light.Hex)
 		nanos := duration.Nanoseconds()
-		tenths := uint16(nanos / 1000 * 1000 * 10)
+		tmp := nanos / (1000 * 1000 * 100)
+		tenths := uint16(tmp)
 		l.SetStateWithTransition(tenths)
 	}
 }
@@ -169,5 +173,11 @@ func (s *Scene) incrSchemeIdx() {
 }
 
 func (s *Scene) Stop() {
-	s.timer.Stop()
+	if s == nil {
+		return
+	}
+	log.Printf("Stopping scene '%v'\n", s.Name)
+	if s.timer != nil {
+		s.timer.Stop()
+	}
 }

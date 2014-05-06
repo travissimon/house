@@ -17,60 +17,60 @@
   #buttonRow {
     margin-bottom: 10px;
   }
- </style>
+</style>
 
-   <h1>Schemes</h1>
+<h1>Schemes</h1>
 
-   <div id="buttonRow" class="row">
-	 <button id="btnEdit" type="button" class="btn btn-primary">
-	   <span class="glyphicon glyphicon-cog" />
-	   Edit/Delete
-	 </button>
-	 <button id="btnCancelEdit" type="button" class="btn btn-default" style="display:none">
-	   <span class="glyphicon glyphicon-remove" />
-	   Cancel
-	 </button>
-   </div>
+<div id="buttonRow" class="row">
+  <button id="btnEdit" type="button" class="btn btn-primary">
+	<span class="glyphicon glyphicon-cog" />
+	Edit/Delete
+  </button>
+  <button id="btnCancelEdit" type="button" class="btn btn-default" style="display:none">
+	<span class="glyphicon glyphicon-remove" />
+	Cancel
+  </button>
+</div>
 
-   {{ range $index, $element := .}}
-	 {{if modIsZero $index 3 0}}
-	   <div class="row">
-	 {{end}}
-	 <div class="col-sm-4 scheme_display" id="div_{{.Id}}">
-	   <div class="row">
-		 <div class="col-sm-6">
-		   {{.Name}}
-		 </div>
-		 <div class="col-sm-1 colour_disp" style="background-color: {{index .Lights 0}}">
-		 </div>
-		 <div class="col-sm-1 colour_disp" style="background-color: {{index .Lights 1}}">
-		 </div>
-		 <div class="col-sm-1 colour_disp" style="background-color: {{index .Lights 2}}">
-		 </div>
-	   </div>
-
-	   <div class="row editRow" style="display:none">
-		 <div class="col-sm-3">
-		   <button id="btnEdit_{{.Id}}" class="btn btn-success btn-xs schemeEdit">
-			 <span class="glyphicon glyphicon-cog" />
-			 Edit
-		   </button>
-		 </div>
-		 <div class="col-sm-3">
-		   <button id="btnDelete_{{.Id}}" class="btn btn-danger btn-xs schemeDelete">
-			 <span class="glyphicon glyphicon-trash" />
-			 Delete
-		   </button>
-		 </div>
-	   </div>
-
-    </div>
-    {{if modIsZero $index 3 2}}
-      </div>
-    {{end}}
+{{ range $index, $element := .}}
+  {{if modIsZero $index 3 0}}
+    <div class="row">
   {{end}}
+  <div class="col-sm-4 scheme_display" id="div_{{.Id}}">
+	<div class="row">
+	  <div class="col-sm-6">
+		{{.Name}}
+	  </div>
+	  <div class="col-sm-1 colour_disp" style="background-color: {{index .Lights 0}}">
+	  </div>
+	  <div class="col-sm-1 colour_disp" style="background-color: {{index .Lights 1}}">
+	  </div>
+	  <div class="col-sm-1 colour_disp" style="background-color: {{index .Lights 2}}">
+	  </div>
+	</div>
 
-  <script>
+	<div class="row editRow" style="display:none">
+	  <div class="col-sm-3">
+		<button id="btnEdit_{{.Id}}" class="btn btn-success btn-xs schemeEdit">
+		  <span class="glyphicon glyphicon-cog" />
+		  Edit
+		</button>
+	  </div>
+	  <div class="col-sm-3">
+		<button id="btnDelete_{{.Id}}" class="btn btn-danger btn-xs schemeDelete">
+		  <span class="glyphicon glyphicon-trash" />
+		  Delete
+		</button>
+	  </div>
+	</div>
+
+  </div>
+  {{if modIsZero $index 3 2}}
+    </div>
+  {{end}}
+{{end}}
+
+<script>
     $(document).ready(function() {
       $(".scheme_display").hover(
 	    function() {

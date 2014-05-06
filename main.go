@@ -11,6 +11,14 @@ import (
 var base *huego.Base
 var lights []*huego.Light
 var generator *colour.ColourSchemeGenerator = colour.NewColourSchemeGenerator()
+var mainScene *Scene
+var wemoUtil = NewWemoUtil()
+
+func notifySceneOfActivity(sensorName string) {
+	if mainScene != nil {
+		mainScene.NotifyOfMovement(sensorName)
+	}
+}
 
 func modIsZero(val int, modAmount int, expValue int) bool {
 	retVal := val%modAmount == expValue
@@ -56,8 +64,9 @@ func randomSchemeHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 type ScenePage struct {
-	Schemes []*Scheme
-	Scenes  []*Scene
+	SelectedScene *Scene
+	Schemes       []*Scheme
+	Scenes        []*Scene
 }
 
 func schemeHandler(w http.ResponseWriter, r *http.Request) {
@@ -66,10 +75,18 @@ func schemeHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func sceneHandler(w http.ResponseWriter, r *http.Request) {
+	scenes, _ := LoadScenes()
+	pg := &ScenePage{nil, nil, scenes}
+	templates.ExecuteTemplate(w, "sceneIndex", pg)
+}
+
+func editSceneHandler(w http.ResponseWriter, r *http.Request) {
+	id := r.URL.Path[len("/scenes/edit/"):]
+	scene, _ := LoadSceneById(id)
 	schemes, _ := LoadSchemes()
 	scenes, _ := LoadScenes()
-	pg := &ScenePage{schemes, scenes}
-	templates.ExecuteTemplate(w, "scene", pg)
+	pg := &ScenePage{scene, schemes, scenes}
+	templates.ExecuteTemplate(w, "sceneEdit", pg)
 }
 
 func getLightProxies() []*LightProxy {
@@ -106,6 +123,7 @@ func main() {
 	http.HandleFunc("/schemes/edit/", editSchemeHandler)
 	http.HandleFunc("/schemes/delete/", deleteSchemeHandler)
 	http.HandleFunc("/schemes", schemeHandler)
+	http.HandleFunc("/scenes/edit/", editSceneHandler)
 	http.HandleFunc("/scenes", sceneHandler)
 	http.HandleFunc("/", homeHandler)
 

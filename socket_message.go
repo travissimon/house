@@ -58,6 +58,14 @@ type SetPowerArguments struct {
 	TurnOn bool
 }
 
+type SetSceneArguments struct {
+	Id string
+}
+
+type DeleteSceneArguments struct {
+	Id string
+}
+
 func (m *SocketMessage) GetSetLightArguments() SetLightArguments {
 	args := m.Request.Arguments
 	id := args["Id"].(string)
@@ -105,6 +113,18 @@ func (m *SocketMessage) GetDeleteSchemeArguments() DeleteSchemeArguments {
 	args := m.Request.Arguments
 	id := args["Id"].(string)
 	return DeleteSchemeArguments{id}
+}
+
+func (m *SocketMessage) GetSetSceneArguments() SetSceneArguments {
+	args := m.Request.Arguments
+	id := args["Id"].(string)
+	return SetSceneArguments{id}
+}
+
+func (m *SocketMessage) GetDeleteSceneArguments() DeleteSceneArguments {
+	args := m.Request.Arguments
+	id := args["Id"].(string)
+	return DeleteSceneArguments{id}
 }
 
 func (m *SocketMessage) GetSetPowerArguments() SetPowerArguments {

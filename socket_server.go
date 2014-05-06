@@ -120,6 +120,10 @@ func (s *SocketServer) HandleIncomingRequest(msg SocketMessage) {
 		s.HandleSetGenerator(msg)
 	case "saveScene":
 		s.HandleSaveScene(msg)
+	case "setScene":
+		s.HandleSetScene(msg)
+	case "deleteScene":
+		s.HandleDeleteScene(msg)
 	case "setScheme":
 		s.HandleSetScheme(msg)
 	case "deleteScheme":
@@ -135,7 +139,21 @@ func (s *SocketServer) HandleIncomingRequest(msg SocketMessage) {
 	}
 }
 
+func stopSceneActivity() {
+	log.Printf("Stopping scene activity")
+	wemoUtil.Stop()
+	mainScene.Stop()
+}
+
+func startSceneActivity(scene *Scene) {
+	log.Printf("Starting scene activity: %s", scene.Name)
+	mainScene = scene
+	mainScene.Start()
+	wemoUtil.Start(notifySceneOfActivity)
+}
+
 func (s *SocketServer) HandleSetLightColour(msg SocketMessage) {
+	stopSceneActivity()
 	args := msg.GetSetLightArguments()
 	l := getLightById(args.Id)
 	l.SetColourFromHex(args.Hex)
@@ -156,7 +174,22 @@ func (s *SocketServer) HandleSaveScene(msg SocketMessage) {
 	scene.Persist()
 }
 
+func (s *SocketServer) HandleSetScene(msg SocketMessage) {
+	log.Printf("Set scene called. Stopping any current activity")
+	stopSceneActivity()
+	args := msg.GetSetSceneArguments()
+	log.Printf("Loading scene: %v\n", args.Id)
+	sc, _ := LoadSceneById(args.Id)
+	startSceneActivity(sc)
+}
+
+func (s *SocketServer) HandleDeleteScene(msg SocketMessage) {
+	args := msg.GetDeleteSceneArguments()
+	DeleteSceneById(args.Id)
+}
+
 func (s *SocketServer) HandleSetGenerator(msg SocketMessage) {
+	stopSceneActivity()
 	args := msg.GetSetGeneratorArguments()
 	strategy := colour.GetHarmonyStrategy(args.Strategy)
 	generator.SetStrategy(strategy)
@@ -198,6 +231,7 @@ func (s *SocketServer) HandleSetGenerator(msg SocketMessage) {
 }
 
 func (s *SocketServer) HandleSetScheme(msg SocketMessage) {
+	stopSceneActivity()
 	args := msg.GetSetSchemeArguments()
 	scheme, _ := LoadSchemeById(args.Id)
 	for _, light := range scheme.Lights {
@@ -214,6 +248,7 @@ func (s *SocketServer) HandleDeleteScheme(msg SocketMessage) {
 }
 
 func (s *SocketServer) HandleSetPower(msg SocketMessage) {
+	stopSceneActivity()
 	args := msg.GetSetPowerArguments()
 	l := getLightById(args.Id)
 	if l.State.On != args.TurnOn {
@@ -223,14 +258,17 @@ func (s *SocketServer) HandleSetPower(msg SocketMessage) {
 }
 
 func (s *SocketServer) HandleAllOn(msg SocketMessage) {
+	stopSceneActivity()
 	powerAll(true)
 }
 
 func (s *SocketServer) HandleAllOff(msg SocketMessage) {
+	stopSceneActivity()
 	powerAll(false)
 }
 
 func powerAll(turnOn bool) {
+	stopSceneActivity()
 	for _, light := range lights {
 		if light.State.On != turnOn {
 			light.State.On = turnOn

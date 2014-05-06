@@ -1,175 +1,151 @@
-{{define "scene"}}
+{{define "sceneIndex"}}
 {{template "header"}}
 <style>
-  .scheme_display {
-    border: 1px solid whitesmoke;
+  .scene_display {
+    border: 1px solid #999;
+    margin-bottom: 10px;
+  }
+  .highlight {
+    border: 1px solid blue;
+    background-color: #EEE;
+    cursor: pointer;
+  }
+  #buttonRow {
+    margin-bottom: 10px;
+  }
+  .editRow button {
+    margin-left: 10px;
   }
 </style>
 
-  <h1>Scene</h1>
+<h1>Scenes</h1>
 
-  <form role="form">
-	<div id="grpName" class="form-group">
-	  <label for="scName">Name</label>
-	  <input type="text" class="form-control" id="scName" placeholder="Scene Name">
-	</div>
+<div id="buttonRow" class="row">
+  <button id="btnEdit" type="button" class="btn btn-primary">
+	<span class="glyphicon glyphicon-cog" />
+	Edit/Delete
+  </button>
+  <button id="btnCancelEdit" type="button" class="btn btn-default" style="display:none">
+	<span class="glyphicon glyphicon-remove" />
+	Cancel
+  </button>
+</div>
 
-	<div id="grpActiveTransition" class="form-group">
-	  <label for="scActiveTransition">ActiveTransition</label>
-	  <input type="text" class="form-control" id="scActiveTransition" placeholder="Active Transition">
+<form class="form-horizontal" role="form">
+  {{range $index, $scene := .Scenes}}
+  <div class="scene_display" id="{{.Id}}">
+    <div class="form-group">
+	  <label class="col-sm-2 control-label">Name</label>
+	  <div class="col-sm-10">
+		<p class="form-control-static">{{.Name}}</p>
+	  </div>
 	</div>
-
-	<div id="grpActiveHold" class="form-group">
-	  <label for="scActiveHold">Active Hold</label>
-	  <input type="text" class="form-control" id="scActiveHold" placeholder="Active Hold">
+    <div class="form-group">
+	  <label class="col-sm-2 control-label">Active Hold</label>
+	  <div class="col-sm-4">
+		<p class="form-control-static">{{.ActiveHold}}</p>
+	  </div>
+	  <label class="col-sm-2 control-label">Active Transition</label>
+	  <div class="col-sm-4">
+		<p class="form-control-static">{{.ActiveTransition}}</p>
+	  </div>
 	</div>
-
-	<div id="grpInactiveTransition" class="form-group">
-	  <label for="scInactiveTransition">Inactive Transition</label>
-	  <input type="text" class="form-control" id="scInactiveTransition" placeholder="Inactive Transition">
+    <div class="form-group">
+	  <label class="col-sm-2 control-label">Inactive Hold</label>
+	  <div class="col-sm-4">
+		<p class="form-control-static">{{.InactiveHold}}</p>
+	  </div>
+	  <label class="col-sm-2 control-label">Inactive Transition</label>
+	  <div class="col-sm-4">
+		<p class="form-control-static">{{.InactiveTransition}}</p>
+	  </div>
 	</div>
-
-	<div id="grpInactiveHold" class="form-group">
-	  <label for="scInactiveHold">Inactive Hold</label>
-	  <input type="text" class="form-control" id="scInactiveHold" placeholder="Inactive Hold">
+	<div class="form-group editRow" style="display:none">
+	  <div class="col-sm-2">
+		<button id="btnEdit_{{.Id}}" class="btn btn-success btn-block sceneEdit">
+		  <span id="spnEdit_{{.Id}}" class="glyphicon glyphicon-cog sceneEdit" />
+		  Edit
+		</button>
+	  </div>
+	  <div class="col-sm-2">
+		<button id="btnDelete_{{.Id}}" class="btn btn-danger btn-block sceneDelete">
+		  <span id="spnDelete_{{.Id}}" class="glyphicon glyphicon-trash sceneDelete" />
+		  Delete
+		</button>
+	  </div>
+	  <div class="col-sm-6">
+	  </div>
 	</div>
-
-	<div id="grpActiveScheme" class="form-group">
-	  <label>ActiveScheme</label>
-	  <select class="form-control" id="scActiveScheme">
-	  {{range $scheme := .Schemes}}
-		  <option value="{{$scheme.Id}}">{{$scheme.Name}}</option>
-	  {{end}}
-	  </select>
-	</div>
-
-	<div id="grpInactiveSchemes" class="row form-group">
-	  <label for="">Inactive Schemes</label>
-	</div>
-   {{ range $index, $element := .Schemes}}
-	 {{if modIsZero $index 4 0}}
-	 <div class="row">
-	 {{end}}
-	 <div class="col-sm-3 schemeDisplay" id="div_{{.Id}}">
-	   <div class="checkbox">
-		 <label>
-		   <input type="checkbox" value="{{.Id}}">
-		   {{.Name}}
-		 </label>
-	   </div>
-	</div>
-    {{if modIsZero $index 4 3}}
-    </div>
-    {{end}}
-  {{end}}
-	 
-    </div>
-  </form>
-
-  <div id="row">
-	<button type="button" id="btnCancelSaveScene" class="btn btn-danger">
-	  <span class="glyphicon glyphicon-remove"></span>
-	  Cancel
-	</button>
-	<button type="button" id="btnSaveScene" class="btn btn-success">
-	  <span class="glyphicon glyphicon-floppy-disk"></span>
-	  Save as new Scene
-	</button>
   </div>
+  {{end}}
+</form>
 
-  <script>
-	 $(document).ready(function() {
-	   $("#btnSaveScene").click(function() {
-	     saveScene();
-	   });
+<script>
+  $(document).ready(function() {
+    $(".scene_display").hover(
+	  function() {
+	    $(this).addClass("highlight");
+	  },
+	  function() {
+	    $(this).removeClass("highlight");
+	  }
+    ).click(function() {
+      var id = $(this).attr("id");
+      startScene(id);
+    });
 
-	   $("#btnCancelSaveScene").click(function() {
-	   });
-	 });
+    $("#btnEdit").click(function() {
+      $("#btnEdit").hide();
+      $("#btnCancelEdit").show();
+      $(".editRow").show();
+    });
 
-	 var ws = new WebSocket("ws://" + window.location.host + "/socket");
-	 ws.onmessage = function(e) {
-	 }
+    $("#btnCancelEdit").click(function() {
+      $("#btnCancelEdit").hide();
+      $("#btnEdit").show()
+      $(".editRow").hide()
+    });
+  
+    $(".sceneEdit").click(function(event) {
+      event.stopPropagation();
+      var id = this.id.substring(8);
+      editScene(id);
+      return false;
+    });
 
-	 function saveScene() {
-	   if (!validateScene()) {
-	     return;
-	   }
-	   scIds = getSelectedInactive();
+    $(".sceneDelete").click(function() {
+      event.stopPropagation();
+      var id = this.id.substring(10);
+      deleteScene(id)
+      return false;
+    });
+  });
 
-	   var req = {
-		 Request: {
-		   Action: "saveScene",
-		   Arguments: {
-			 id: 0,
-			 name: getText("Name"),
-	         activeTransition: getNumber("ActiveTransition"),
-	         activeHold: getNumber("ActiveHold"),
-	         inactiveTransition: getNumber("InactiveTransition"),
-	         inactiveHold: getNumber("InactiveHold"),
-	         activeScheme: parseInt(getNumber("ActiveScheme")),
-	         inactiveSchemes: scIds,
-		   },
-		 },
-	   };
+  var ws = new WebSocket("ws://" + window.location.host + "/socket");
+  ws.onmessage = function(e) {
+  }
 
-	   var json = JSON.stringify(req);
-	   ws.send(json);
-	 }
+  function startScene(id) {
+	  var req = {
+	    Request: {
+	      Action: "setScene",
+          Arguments: {
+	 	    Id: id,
+		  },
+		},
+	  };
+	  var json = JSON.stringify(req);
+	  ws.send(json);
+  }
 
-	 function getSelectedInactive() {
-	   var schemes = [];
-	   $("input[type=checkbox]:checked").each(function() {
-		 schemes.push(parseInt($(this).val()));
-	   });
-	   return schemes;
-	 }
+  function editScene(id) {
+    window.location.href="/scenes/edit/" + id;
+  }
 
-	 function validateScene() {
-	   var isValid = true;
-	   isValid &= validateText("Name")
-	   isValid &= validateNumber("ActiveTransition")
-	   isValid &= validateNumber("ActiveHold")
-	   isValid &= validateNumber("InactiveTransition")
-	   isValid &= validateNumber("InactiveHold")
-	   isValid &= validateNumber("ActiveScheme")
-	   return isValid;
-	 }
+  function deleteScene(id) {
+    window.location.href="/scenes/delete/" + id;
+  }
 
-	 function validateNumber(selectorPostfix) {
-	   var val = $("#sc" + selectorPostfix).val();
-	   if (val == null || val.length == 0) {
-		 $("#grp" + selectorPostfix).addClass("has-error");
-		 return false;
-	   }
-	   var isInvalid = isNaN(parseInt(val))
-	   if (isInvalid) {
-		 $("#grp" + selectorPostfix).addClass("has-error");
-		 return false
-	   }
-	   $("#grp" + selectorPostfix).removeClass("has-error");
-	   return true;
-	 }
-
-	 function getNumber(selectorPostfix) {
-	   var val = $("#sc" + selectorPostfix).val();
-	   return val;
-	 }
-
-	 function validateText(selectorPostfix) {
-	   var val = $("#sc" + selectorPostfix).val();
-	   if (val == null || val == "") {
-		 $("#grp" + selectorPostfix).addClass("has-error");
-		 return false;
-	   }
-	  $("#grp" + selectorPostfix).removeClass("has-error");	
-	  return true;
-	}
-
-	function getText(selectorPostfix) {
-	  return $("#sc" + selectorPostfix).val();
-	}
-
-  </script>
+</script>
 {{template "footer"}}
 {{end}}
