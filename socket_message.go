@@ -24,6 +24,11 @@ type ClientRequest struct {
 	Arguments map[string]interface{}
 }
 
+type SetPowerArguments struct {
+	Id     string
+	TurnOn bool
+}
+
 type SetLightArguments struct {
 	Id   string
 	Name string
@@ -45,24 +50,25 @@ type SaveSceneArguments struct {
 	InactiveSchemes    []int
 }
 
-type SetSchemeArguments struct {
-	Id string
-}
-
-type DeleteSchemeArguments struct {
-	Id string
-}
-
-type SetPowerArguments struct {
-	Id     string
-	TurnOn bool
-}
-
 type SetSceneArguments struct {
 	Id string
 }
 
 type DeleteSceneArguments struct {
+	Id string
+}
+
+type SetSchemeArguments struct {
+	Id string
+}
+
+type SaveSchemeArguments struct {
+	Id     string
+	Name   string
+	Lights []*SetLightArguments
+}
+
+type DeleteSchemeArguments struct {
 	Id string
 }
 
@@ -86,7 +92,10 @@ func (m *SocketMessage) GetSetGeneratorArguments() SetGeneratorArguments {
 
 func (m *SocketMessage) GetSaveSceneArguments() SaveSceneArguments {
 	args := m.Request.Arguments
-	id := int(args["id"].(float64))
+	id := 0
+	if args["id"] != nil {
+		id = int(args["id"].(float64))
+	}
 	name := args["name"].(string)
 	activeTransition, _ := time.ParseDuration(args["activeTransition"].(string))
 	activeHold, _ := time.ParseDuration(args["activeHold"].(string))
@@ -103,6 +112,18 @@ func (m *SocketMessage) GetSaveSceneArguments() SaveSceneArguments {
 	return SaveSceneArguments{id, name, activeTransition, activeHold, inactiveTransition, inactiveHold, activeScheme, schs}
 }
 
+func (m *SocketMessage) GetSetSceneArguments() SetSceneArguments {
+	args := m.Request.Arguments
+	id := args["Id"].(string)
+	return SetSceneArguments{id}
+}
+
+func (m *SocketMessage) GetDeleteSceneArguments() DeleteSceneArguments {
+	args := m.Request.Arguments
+	id := args["Id"].(string)
+	return DeleteSceneArguments{id}
+}
+
 func (m *SocketMessage) GetSetSchemeArguments() SetSchemeArguments {
 	args := m.Request.Arguments
 	id := args["Id"].(string)
@@ -115,16 +136,21 @@ func (m *SocketMessage) GetDeleteSchemeArguments() DeleteSchemeArguments {
 	return DeleteSchemeArguments{id}
 }
 
-func (m *SocketMessage) GetSetSceneArguments() SetSceneArguments {
+func (m *SocketMessage) GetSaveSchemeArguments() SaveSchemeArguments {
 	args := m.Request.Arguments
 	id := args["Id"].(string)
-	return SetSceneArguments{id}
-}
-
-func (m *SocketMessage) GetDeleteSceneArguments() DeleteSceneArguments {
-	args := m.Request.Arguments
-	id := args["Id"].(string)
-	return DeleteSceneArguments{id}
+	name := args["Name"].(string)
+	lightArray := args["Lights"].([]interface{})
+	lights := make([]*SetLightArguments, 0, len(lightArray))
+	for _, lightMap := range lightArray {
+		lm := lightMap.(map[string]interface{})
+		id := lm["Id"].(string)
+		name := lm["Name"].(string)
+		hex := lm["Hex"].(string)
+		l := SetLightArguments{string(id), name, hex}
+		lights = append(lights, &l)
+	}
+	return SaveSchemeArguments{id, name, lights}
 }
 
 func (m *SocketMessage) GetSetPowerArguments() SetPowerArguments {

@@ -98,7 +98,7 @@
 
 	  $(".schemeEdit").click(function(event) {
 	    event.stopPropagation();
-        var id = $(this).attr("id").substring(8);
+        var id = this.id.substring(8);
 	    editScheme(id);
 	  });
 

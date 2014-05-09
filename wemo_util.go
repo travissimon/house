@@ -34,6 +34,7 @@ func NewWemoUtil() *WemoUtil {
 type MotionDetected func(string)
 
 func (util *WemoUtil) Start(onMotion MotionDetected) {
+	log.Printf("Starting Wemo util")
 	util.stopChan = make(chan bool)
 	util.poller = time.NewTicker(100 * time.Millisecond)
 	go func() {
@@ -55,11 +56,9 @@ func (util *WemoUtil) Start(onMotion MotionDetected) {
 
 func (util *WemoUtil) Stop() {
 	if util.stopChan != nil {
-		log.Printf("Sending stop")
+		log.Printf("Requesting Wemo stop")
 		util.stopChan <- true
 		close(util.stopChan)
 		util.stopChan = nil
-	} else {
-		log.Printf("stop chan nil, nothing to see")
 	}
 }

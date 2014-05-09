@@ -11,34 +11,35 @@
   <form role="form">
 	<div id="grpName" class="form-group">
 	  <label for="scName">Name</label>
-	  <input type="text" class="form-control" id="scName" placeholder="Scene Name">
+	  <input type="text" class="form-control" id="scName" value="{{.Scene.Name}}" placeholder="Scene Name">
 	</div>
 
 	<div id="grpActiveTransition" class="form-group">
 	  <label for="scActiveTransition">ActiveTransition</label>
-	  <input type="text" class="form-control" id="scActiveTransition" placeholder="Active Transition">
+	  <input type="text" class="form-control" id="scActiveTransition" value="{{.Scene.ActiveTransition}}" placeholder="Active Transition">
 	</div>
 
 	<div id="grpActiveHold" class="form-group">
 	  <label for="scActiveHold">Active Hold</label>
-	  <input type="text" class="form-control" id="scActiveHold" placeholder="Active Hold">
+	  <input type="text" class="form-control" id="scActiveHold" value="{{.Scene.ActiveHold}}" placeholder="Active Hold">
 	</div>
 
 	<div id="grpInactiveTransition" class="form-group">
 	  <label for="scInactiveTransition">Inactive Transition</label>
-	  <input type="text" class="form-control" id="scInactiveTransition" placeholder="Inactive Transition">
+	  <input type="text" class="form-control" id="scInactiveTransition" value="{{.Scene.InactiveTransition}}" placeholder="Inactive Transition">
 	</div>
 
 	<div id="grpInactiveHold" class="form-group">
 	  <label for="scInactiveHold">Inactive Hold</label>
-	  <input type="text" class="form-control" id="scInactiveHold" placeholder="Inactive Hold">
+	  <input type="text" class="form-control" id="scInactiveHold" value="{{.Scene.InactiveHold}}" placeholder="Inactive Hold">
 	</div>
 
 	<div id="grpActiveScheme" class="form-group">
 	  <label>ActiveScheme</label>
 	  <select class="form-control" id="scActiveScheme">
+      {{$curScene := .Scene.Id}}
 	  {{range $scheme := .Schemes}}
-		  <option value="{{$scheme.Id}}">{{$scheme.Name}}</option>
+		  <option value="{{$scheme.Id}}" {{if eq $curScene $scheme.Id}}selected{{end}}>{{$scheme.Name}}</option>
 	  {{end}}
 	  </select>
 	</div>
@@ -46,17 +47,23 @@
 	<div id="grpInactiveSchemes" class="row form-group">
 	  <label for="">Inactive Schemes</label>
 	</div>
+   {{ $selectedOpts := .Scene.InactiveSchemes}}
    {{ range $index, $element := .Schemes}}
 	 {{if modIsZero $index 4 0}}
 	 <div class="row">
 	 {{end}}
-	 <div class="col-sm-3 schemeDisplay" id="div_{{.Id}}">
+	 <div class="col-sm-2 schemeDisplay" id="div_{{.Id}}">
 	   <div class="checkbox">
 		 <label>
-		   <input type="checkbox" value="{{.Id}}">
+		   <input type="checkbox" value="{{.Id}}" {{if isSelectedOption $selectedOpts .Id}}checked{{end}}>
 		   {{.Name}}
 		 </label>
 	   </div>
+	</div>
+	<div class="col-sm-1">
+	  <button type="button" class="previewLink" id="btnPreview_{{.Id}}">
+		<span class="glyphicon glyphicon-eye-open previewLink" id="spnPreview_{{.Id}}"></span>
+	  </button>
 	</div>
     {{if modIsZero $index 4 3}}
     </div>
@@ -83,7 +90,14 @@
 	     saveScene();
 	   });
 
+	   $(".previewLink").click(function(e) {
+	     e.stopPropagation();
+	     var id = this.id.substring(11);
+	     previewScheme(id);
+	   });
+
 	   $("#btnCancelSaveScene").click(function() {
+	     document.history.back();
 	   });
 	 });
 
@@ -101,7 +115,7 @@
 		 Request: {
 		   Action: "saveScene",
 		   Arguments: {
-			 id: 0,
+			 id: {{.Scene.Id}},
 			 name: getText("Name"),
 	         activeTransition: getNumber("ActiveTransition"),
 	         activeHold: getNumber("ActiveHold"),
@@ -115,6 +129,19 @@
 
 	   var json = JSON.stringify(req);
 	   ws.send(json);
+	 }
+
+	 function previewScheme(id) {
+	   var req = {
+	    Request: {
+	      Action: "setScheme",
+          Arguments: {
+	 	    Id: id,
+		  },
+		},
+	  };
+	  var json = JSON.stringify(req);
+	  ws.send(json);
 	 }
 
 	 function getSelectedInactive() {

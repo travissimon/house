@@ -25,8 +25,18 @@ func modIsZero(val int, modAmount int, expValue int) bool {
 	return retVal
 }
 
+func isSelectedOption(selectedOptions []int, currentOption int) bool {
+	for _, id := range selectedOptions {
+		if id == currentOption {
+			return true
+		}
+	}
+	return false
+}
+
 var funcMap = template.FuncMap{
-	"modIsZero": modIsZero,
+	"modIsZero":        modIsZero,
+	"isSelectedOption": isSelectedOption,
 }
 
 var templates = template.Must(template.New("templates").Funcs(funcMap).ParseGlob("views/*.html"))
@@ -64,9 +74,9 @@ func randomSchemeHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 type ScenePage struct {
-	SelectedScene *Scene
-	Schemes       []*Scheme
-	Scenes        []*Scene
+	Scene     *Scene
+	Schemes   []*Scheme
+	AllScenes []*Scene
 }
 
 func schemeHandler(w http.ResponseWriter, r *http.Request) {
@@ -83,6 +93,9 @@ func sceneHandler(w http.ResponseWriter, r *http.Request) {
 func editSceneHandler(w http.ResponseWriter, r *http.Request) {
 	id := r.URL.Path[len("/scenes/edit/"):]
 	scene, _ := LoadSceneById(id)
+	if scene == nil {
+		scene = NewScene()
+	}
 	schemes, _ := LoadSchemes()
 	scenes, _ := LoadScenes()
 	pg := &ScenePage{scene, schemes, scenes}

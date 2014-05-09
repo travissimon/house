@@ -7,6 +7,7 @@ import (
 	"log"
 	"math/rand"
 	"net/http"
+	"strconv"
 	"time"
 )
 
@@ -126,6 +127,8 @@ func (s *SocketServer) HandleIncomingRequest(msg SocketMessage) {
 		s.HandleDeleteScene(msg)
 	case "setScheme":
 		s.HandleSetScheme(msg)
+	case "saveScheme":
+		s.HandleSaveScheme(msg)
 	case "deleteScheme":
 		s.HandleDeleteScheme(msg)
 	case "allOn":
@@ -140,7 +143,6 @@ func (s *SocketServer) HandleIncomingRequest(msg SocketMessage) {
 }
 
 func stopSceneActivity() {
-	log.Printf("Stopping scene activity")
 	wemoUtil.Stop()
 	mainScene.Stop()
 }
@@ -240,6 +242,17 @@ func (s *SocketServer) HandleSetScheme(msg SocketMessage) {
 		l.SetStateWithTransition(10)
 		time.Sleep(30 * time.Millisecond)
 	}
+}
+
+func (s *SocketServer) HandleSaveScheme(msg SocketMessage) {
+	args := msg.GetSaveSchemeArguments()
+	scheme := NewScheme()
+	if args.Id != "" {
+		scheme.Id, _ = strconv.Atoi(args.Id)
+	}
+	scheme.Name = args.Name
+	scheme.Lights = args.Lights
+	scheme.Persist()
 }
 
 func (s *SocketServer) HandleDeleteScheme(msg SocketMessage) {
