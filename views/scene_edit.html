@@ -37,9 +37,9 @@
 	<div id="grpActiveScheme" class="form-group">
 	  <label>ActiveScheme</label>
 	  <select class="form-control" id="scActiveScheme">
-      {{$curScene := .Scene.Id}}
+      {{$curActive := .Scene.ActiveScheme}}
 	  {{range $scheme := .Schemes}}
-		  <option value="{{$scheme.Id}}" {{if eq $curScene $scheme.Id}}selected{{end}}>{{$scheme.Name}}</option>
+		  <option value="{{$scheme.Id}}" {{if eq $curActive $scheme.Id}}selected{{end}}>{{$scheme.Name}}</option>
 	  {{end}}
 	  </select>
 	</div>

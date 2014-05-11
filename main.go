@@ -92,12 +92,12 @@ func sceneHandler(w http.ResponseWriter, r *http.Request) {
 
 func editSceneHandler(w http.ResponseWriter, r *http.Request) {
 	id := r.URL.Path[len("/scenes/edit/"):]
+	schemes, _ := LoadSchemes()
+	scenes, _ := LoadScenes()
 	scene, _ := LoadSceneById(id)
 	if scene == nil {
 		scene = NewScene()
 	}
-	schemes, _ := LoadSchemes()
-	scenes, _ := LoadScenes()
 	pg := &ScenePage{scene, schemes, scenes}
 	templates.ExecuteTemplate(w, "sceneEdit", pg)
 }
@@ -150,7 +150,14 @@ func reloadLightState() []*huego.Light {
 }
 
 func initHue() {
-	bases, _ := huego.DiscoverBases()
-	base = &bases[0]
+	var err error
+	base, err = GetHueBase()
+	if err != nil {
+		log.Printf("Error: %v", err)
+	}
+	log.Printf("init base: %v\n", base)
+	//bases, _ := huego.DiscoverBases()
+	//base = &bases[0]
+	log.Printf("Base ip: %v, developer: %v", base.InternalIp, base.Username)
 	lights, _ = base.GetLights()
 }

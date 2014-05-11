@@ -132,7 +132,7 @@ func deleteSceneByName(name string) error {
 
 func (s *Scene) NotifyOfMovement(sensorName string) {
 	if !s.isActive {
-		log.Printf("Going to Active State")
+		log.Printf("Going to Active State\n")
 		s.transitionToScheme(s.ActiveScheme, s.ActiveTransition)
 	}
 	s.isActive = true
@@ -178,6 +178,7 @@ func (s *Scene) Stop() {
 	}
 	log.Printf("Stopping scene '%v'\n", s.Name)
 	if s.timer != nil {
+		log.Printf("Stopping timer\n")
 		s.timer.Stop()
 	}
 }

@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
-	"log"
 	"os"
 	"strconv"
 	"strings"
@@ -33,7 +32,6 @@ func nextSchemeId() int {
 
 func initLastSchemeId() {
 	files, _ := ioutil.ReadDir(schemeDirectory)
-	log.Printf("init scheme id: found %v files\n", len(files))
 	for _, f := range files {
 		sepIndex := strings.Index(f.Name(), ".")
 		idStr := f.Name()[:sepIndex]
